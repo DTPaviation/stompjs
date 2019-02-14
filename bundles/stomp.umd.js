@@ -1,3 +1,4 @@
+import { TextEncoder, TextDecoder } from "text-encoding";
 (function webpackUniversalModuleDefinition(root, factory) {
   if (typeof exports === "object" && typeof module === "object")
     module.exports = factory();
@@ -9,9 +10,9 @@
   return /******/ (function(modules) {
     // webpackBootstrap
     /******/ // The module cache
-    const TextEncodingPolyfill = require("text-encoding");
-    TextEncoder = TextEncodingPolyfill.TextEncoder;
-    TextDecoder = TextEncodingPolyfill.TextDecoder;
+    // const TextEncodingPolyfill = require("text-encoding");
+    // TextEncoder = TextEncodingPolyfill.TextEncoder;
+    // TextDecoder = TextEncodingPolyfill.TextDecoder;
     /******/ var installedModules = {}; // The require function
     /******/
     /******/ /******/ function __webpack_require__(moduleId) {

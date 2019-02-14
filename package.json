@@ -50,7 +50,6 @@
   "typings": "index.d.ts",
   "sideEffects": false,
   "dependencies": {
-    "text-encoding": "^0.7.0",
-    "@types/text-encoding": "0.0.35"
+    "text-encoding": "^0.7.0"
   }
 }
