@@ -1,7 +1,8 @@
-import {BYTE} from './byte';
-import {IFrame} from './i-frame';
-import {StompHeaders} from './stomp-headers';
-import {IRawFrameType} from './types';
+import { BYTE } from "./byte";
+import { IFrame } from "./i-frame";
+import { StompHeaders } from "./stomp-headers";
+import { IRawFrameType } from "./types";
+import { TextDecoder, TextEncoder } from "text-encoding";
 
 /**
  * Frame class represents a STOMP frame.
@@ -55,10 +56,21 @@ export class FrameImpl implements IFrame {
    * @internal
    */
   constructor(params: {
-    command: string, headers?: StompHeaders, body?: string, binaryBody?: Uint8Array,
-    escapeHeaderValues?: boolean, skipContentLengthHeader?: boolean
+    command: string;
+    headers?: StompHeaders;
+    body?: string;
+    binaryBody?: Uint8Array;
+    escapeHeaderValues?: boolean;
+    skipContentLengthHeader?: boolean;
   }) {
-    const {command, headers, body, binaryBody, escapeHeaderValues, skipContentLengthHeader} = params;
+    const {
+      command,
+      headers,
+      body,
+      binaryBody,
+      escapeHeaderValues,
+      skipContentLengthHeader
+    } = params;
     this.command = command;
     this.headers = (Object as any).assign({}, headers || {});
 
@@ -66,7 +78,7 @@ export class FrameImpl implements IFrame {
       this._binaryBody = binaryBody;
       this.isBinaryBody = true;
     } else {
-      this._body = body || '';
+      this._body = body || "";
       this.isBinaryBody = false;
     }
     this.escapeHeaderValues = escapeHeaderValues || false;
@@ -78,18 +90,25 @@ export class FrameImpl implements IFrame {
    *
    * @internal
    */
-  public static fromRawFrame(rawFrame: IRawFrameType, escapeHeaderValues: boolean): FrameImpl {
+  public static fromRawFrame(
+    rawFrame: IRawFrameType,
+    escapeHeaderValues: boolean
+  ): FrameImpl {
     const headers: StompHeaders = {};
-    const trim = (str: string): string => str.replace(/^\s+|\s+$/g, '');
+    const trim = (str: string): string => str.replace(/^\s+|\s+$/g, "");
 
     // In case of repeated headers, as per standards, first value need to be used
     for (const header of rawFrame.headers.reverse()) {
-      const idx = header.indexOf(':');
+      const idx = header.indexOf(":");
 
       const key = trim(header[0]);
       let value = trim(header[1]);
 
-      if (escapeHeaderValues && (rawFrame.command !== 'CONNECT') && (rawFrame.command !== 'CONNECTED')) {
+      if (
+        escapeHeaderValues &&
+        rawFrame.command !== "CONNECT" &&
+        rawFrame.command !== "CONNECTED"
+      ) {
         value = FrameImpl.hdrValueUnEscape(value);
       }
 
@@ -118,7 +137,7 @@ export class FrameImpl implements IFrame {
    *
    * @internal
    */
-  public serialize(): string|ArrayBuffer {
+  public serialize(): string | ArrayBuffer {
     const cmdAndHeaders = this.serializeCmdAndHeaders();
 
     if (this.isBinaryBody) {
@@ -131,18 +150,25 @@ export class FrameImpl implements IFrame {
   private serializeCmdAndHeaders(): string {
     const lines = [this.command];
     if (this.skipContentLengthHeader) {
-      delete this.headers['content-length'];
+      delete this.headers["content-length"];
     }
 
     for (const name of Object.keys(this.headers || {})) {
       const value = this.headers[name];
-      if (this.escapeHeaderValues && (this.command !== 'CONNECT') && (this.command !== 'CONNECTED')) {
+      if (
+        this.escapeHeaderValues &&
+        this.command !== "CONNECT" &&
+        this.command !== "CONNECTED"
+      ) {
         lines.push(`${name}:${FrameImpl.hdrValueEscape(`${value}`)}`);
       } else {
         lines.push(`${name}:${value}`);
       }
     }
-    if (this.isBinaryBody || (!this.isBodyEmpty() && !this.skipContentLengthHeader)) {
+    if (
+      this.isBinaryBody ||
+      (!this.isBodyEmpty() && !this.skipContentLengthHeader)
+    ) {
       lines.push(`content-length:${this.bodyLength()}`);
     }
     return lines.join(BYTE.LF) + BYTE.LF + BYTE.LF;
@@ -165,14 +191,22 @@ export class FrameImpl implements IFrame {
     return s ? new TextEncoder().encode(s).length : 0;
   }
 
-  private static toUnit8Array(cmdAndHeaders: string, binaryBody: Uint8Array): Uint8Array {
+  private static toUnit8Array(
+    cmdAndHeaders: string,
+    binaryBody: Uint8Array
+  ): Uint8Array {
     const uint8CmdAndHeaders = new TextEncoder().encode(cmdAndHeaders);
     const nullTerminator = new Uint8Array([0]);
-    const uint8Frame = new Uint8Array(uint8CmdAndHeaders.length + binaryBody.length + nullTerminator.length);
+    const uint8Frame = new Uint8Array(
+      uint8CmdAndHeaders.length + binaryBody.length + nullTerminator.length
+    );
 
     uint8Frame.set(uint8CmdAndHeaders);
     uint8Frame.set(binaryBody, uint8CmdAndHeaders.length);
-    uint8Frame.set(nullTerminator, uint8CmdAndHeaders.length + binaryBody.length);
+    uint8Frame.set(
+      nullTerminator,
+      uint8CmdAndHeaders.length + binaryBody.length
+    );
 
     return uint8Frame;
   }
@@ -182,8 +216,12 @@ export class FrameImpl implements IFrame {
    * @internal
    */
   public static marshall(params: {
-    command: string, headers?: StompHeaders, body?: string, binaryBody?: Uint8Array,
-    escapeHeaderValues?: boolean, skipContentLengthHeader?: boolean
+    command: string;
+    headers?: StompHeaders;
+    body?: string;
+    binaryBody?: Uint8Array;
+    escapeHeaderValues?: boolean;
+    skipContentLengthHeader?: boolean;
   }) {
     const frame = new FrameImpl(params);
     return frame.serialize();
@@ -193,13 +231,21 @@ export class FrameImpl implements IFrame {
    *  Escape header values
    */
   private static hdrValueEscape(str: string): string {
-    return str.replace(/\\/g, '\\\\').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/:/g, '\\c');
+    return str
+      .replace(/\\/g, "\\\\")
+      .replace(/\r/g, "\\r")
+      .replace(/\n/g, "\\n")
+      .replace(/:/g, "\\c");
   }
 
   /**
    * UnEscape header values
    */
   private static hdrValueUnEscape(str: string): string {
-    return str.replace(/\\r/g, '\r').replace(/\\n/g, '\n').replace(/\\c/g, ':').replace(/\\\\/g, '\\');
+    return str
+      .replace(/\\r/g, "\r")
+      .replace(/\\n/g, "\n")
+      .replace(/\\c/g, ":")
+      .replace(/\\\\/g, "\\");
   }
 }
