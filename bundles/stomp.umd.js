@@ -9,7 +9,7 @@
   return /******/ (function(modules) {
     // webpackBootstrap
     /******/ // The module cache
-    const TextEncodingPolyfill = require("text-encoding");
+    var TextEncodingPolyfill = require("text-encoding");
     TextEncoder = TextEncodingPolyfill.TextEncoder;
     TextDecoder = TextEncodingPolyfill.TextDecoder;
     /******/ var installedModules = {}; // The require function
